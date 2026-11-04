@@ -273,10 +273,18 @@
       background-image: none !important;
     }
 
-    #view-2d-img {
+    .img-preview {
       max-width: 80%;
       max-height: 400px;
       object-fit: contain;
+    }
+
+    .img-enem {
+      max-width: 300px; /* Tamanho otimizado para enunciados */
+      padding: 15px;
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px dashed #cbd5e1;
     }
 
     #view-3d-container {
@@ -428,10 +436,11 @@
       
       <div class="tabs-header">
         <div class="tabs-buttons">
-          <button class="tab-btn active" id="tab-2d" onclick="alternarAba('2d')"><i class="fa-solid fa-draw-polygon"></i> Visão 2D (Estrutural)</button>
-          <button class="tab-btn" id="tab-3d" onclick="alternarAba('3d')"><i class="fa-solid fa-cube"></i> Visão 3D (Modelo)</button>
+          <button class="tab-btn active" id="tab-2d" onclick="alternarAba('2d')"><i class="fa-solid fa-draw-polygon"></i> 2D Estrutural</button>
+          <button class="tab-btn" id="tab-enem" onclick="alternarAba('enem')"><i class="fa-solid fa-file-lines"></i> Estilo ENEM / Prova</button>
+          <button class="tab-btn" id="tab-3d" onclick="alternarAba('3d')"><i class="fa-solid fa-cube"></i> Modelo 3D</button>
         </div>
-        <span style="font-size: 0.8rem; color: var(--text-muted);" id="status-resolucao">Alta Resolução PNG</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);" id="status-resolucao">Pronto para Copiar</span>
       </div>
 
       <div class="canvas-container bg-checkerboard" id="canvas-wrapper">
@@ -441,8 +450,14 @@
           <span style="font-size: 0.9rem;">Buscando molécula...</span>
         </div>
 
-        <!-- Renderização 2D -->
-        <img id="view-2d-img" src="" alt="Estrutura 2D">
+        <!-- Renderização 2D Padrão -->
+        <img id="view-2d-img" class="img-preview" src="" alt="Estrutura 2D">
+
+        <!-- Renderização 2D Estilo ENEM / Questão -->
+        <div id="view-enem-wrapper" class="hidden" style="text-align: center;">
+          <img id="view-enem-img" class="img-enem" src="" alt="Estrutura estilo ENEM">
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">*Proporção e contraste otimizados para inserção em texto e enunciados Word/PDF</p>
+        </div>
 
         <!-- Renderização 3D -->
         <div id="view-3d-container" class="hidden"></div>
@@ -452,7 +467,7 @@
       <div class="action-bar">
         <span style="font-size: 0.85rem; color: var(--text-muted);">Visualização Ativa: <strong id="txt-modo-ativo" style="color: var(--text-main);">2D Estrutural</strong></span>
         <div class="btn-group">
-          <button class="btn-action" onclick="copiarParaClipboard()"><i class="fa-regular fa-copy"></i> Copiar Imagem</button>
+          <button class="btn-action" onclick="copiarParaClipboard()"><i class="fa-regular fa-copy"></i> Copiar para Questão</button>
           <button class="btn-action btn-primary" onclick="baixarImagem()"><i class="fa-solid fa-download"></i> Baixar PNG</button>
         </div>
       </div>
@@ -467,7 +482,6 @@
     let moleculaAtual = { nome: '', smiles: '', cid: '', formula: '' };
     let viewer3D = null;
 
-    // Tradução de termos em português para inglês na busca da PubChem
     const tradutores = {
       'aspirina': 'aspirin',
       'cafeina': 'caffeine',
@@ -483,7 +497,6 @@
     };
 
     window.onload = function() {
-      // Inicializar com Aspirina por padrão
       carregarPreset('aspirina');
     };
 
@@ -494,7 +507,6 @@
       const termoBusca = tradutores[termoLimpo] || query;
 
       try {
-        // Busca Propriedades via PubChem REST API
         const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(termoBusca)}/property/Title,MolecularFormula,CanonicalSMILES/JSON`;
         const res = await fetch(url);
         
@@ -519,33 +531,33 @@
     }
 
     function atualizarInterface() {
-      // Atualizar Textos Laterais
       document.getElementById('info-nome').innerText = moleculaAtual.nome;
       document.getElementById('info-formula').innerText = moleculaAtual.formula;
       document.getElementById('info-smiles').innerText = moleculaAtual.smiles;
 
-      // Renderizar 2D via Imagem direta da Pubchem pelo CID
+      // 2D Padrão
       const img2D = document.getElementById('view-2d-img');
       img2D.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${moleculaAtual.cid}/PNG?record_type=2d&image_size=600x600`;
 
-      // Renderizar 3D se a aba estiver pronta
+      // 2D Estilo ENEM (tamanho menor, fundo branco/limpo, auto-crop)
+      const imgENEM = document.getElementById('view-enem-img');
+      imgENEM.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${moleculaAtual.cid}/PNG?record_type=2d&image_size=350x350`;
+
       renderizar3D();
     }
 
     function renderizar3D() {
       const container = document.getElementById('view-3d-container');
-      container.innerHTML = ''; // limpa canvas anterior
+      container.innerHTML = '';
 
       viewer3D = $3Dmol.createViewer(container, { backgroundColor: 'transparent' });
       
-      // Carregar estrutura 3D da Pubchem usando o CID
       $.get(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${moleculaAtual.cid}/SDF?record_type=3d`, function(data) {
         viewer3D.addModel(data, "sdf");
         viewer3D.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } });
         viewer3D.zoomTo();
         viewer3D.render();
       }).fail(function() {
-        // Fallback se não houver 3D nativo na Pubchem
         viewer3D.addModel(moleculaAtual.smiles, "smiles");
         viewer3D.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
         viewer3D.zoomTo();
@@ -556,12 +568,17 @@
     function alternarAba(modo) {
       modoAtual = modo;
       document.getElementById('tab-2d').classList.toggle('active', modo === '2d');
+      document.getElementById('tab-enem').classList.toggle('active', modo === 'enem');
       document.getElementById('tab-3d').classList.toggle('active', modo === '3d');
       
       document.getElementById('view-2d-img').classList.toggle('hidden', modo !== '2d');
+      document.getElementById('view-enem-wrapper').classList.toggle('hidden', modo !== 'enem');
       document.getElementById('view-3d-container').classList.toggle('hidden', modo !== '3d');
       
-      document.getElementById('txt-modo-ativo').innerText = modo === '2d' ? '2D Estrutural' : '3D Modelo Tridimensional';
+      let labelModo = '2D Estrutural';
+      if (modo === 'enem') labelModo = 'Estilo ENEM / Enunciado de Prova';
+      if (modo === '3d') labelModo = '3D Modelo Tridimensional';
+      document.getElementById('txt-modo-ativo').innerText = labelModo;
 
       if (modo === '3d' && viewer3D) {
         viewer3D.resize();
@@ -593,12 +610,16 @@
     }
 
     function baixarImagem() {
-      if (modoAtual === '2d') {
+      let url = '';
+      if (modoAtual === '2d') url = document.getElementById('view-2d-img').src;
+      else if (modoAtual === 'enem') url = document.getElementById('view-enem-img').src;
+      
+      if (url) {
         const link = document.createElement('a');
-        link.download = `${moleculaAtual.nome}_2D.png`;
-        link.href = document.getElementById('view-2d-img').src;
+        link.download = `${moleculaAtual.nome}_${modoAtual.toUpperCase()}.png`;
+        link.href = url;
         link.click();
-      } else {
+      } else if (modoAtual === '3d') {
         const canvas = document.querySelector('#view-3d-container canvas');
         if (canvas) {
           const link = document.createElement('a');
@@ -612,13 +633,14 @@
     async function copiarParaClipboard() {
       try {
         let dataUrl = '';
-        if (modoAtual === '2d') {
-          const img = document.getElementById('view-2d-img');
+        let targetImg = modoAtual === 'enem' ? document.getElementById('view-enem-img') : document.getElementById('view-2d-img');
+
+        if (modoAtual === '2d' || modoAtual === 'enem') {
           const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth || 600;
-          canvas.height = img.naturalHeight || 600;
+          canvas.width = targetImg.naturalWidth || 350;
+          canvas.height = targetImg.naturalHeight || 350;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
+          ctx.drawImage(targetImg, 0, 0);
           dataUrl = canvas.toDataURL('image/png');
         } else {
           const canvas3d = document.querySelector('#view-3d-container canvas');
@@ -629,7 +651,7 @@
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        alert('Imagem copiada para a área de transferência! (Ctrl+V para colar)');
+        alert('Imagem copiada! Agora basta dar Ctrl+V na sua questão no Word/Docs.');
       } catch (err) {
         alert('Não foi possível copiar automaticamente. Utilize o botão "Baixar PNG".');
       }
