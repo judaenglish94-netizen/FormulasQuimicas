@@ -2,11 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChemSnap - Gerador Químico para Professores</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+  <!-- Kernel do Editor de Desenho Molecular Interativo (ChemDraw JSME) -->
+  <script type="text/javascript" src="https://jsme-editor.github.io/dist/jsme/jsme.nocache.js"></script>
   <style>
     :root {
       --bg-dark: #0b1120;
@@ -117,12 +119,25 @@
       flex-direction: column;
       align-items: center;
       gap: 15px;
+      position: relative;
     }
 
     .feature-card:hover {
       border-color: var(--accent);
       transform: translateY(-5px);
       box-shadow: 0 10px 25px rgba(16, 185, 129, 0.15);
+    }
+
+    .card-badge-tag {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 0.7rem;
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 12px;
     }
 
     .card-icon {
@@ -265,6 +280,26 @@
       color: var(--accent);
     }
 
+    .info-card {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .info-label {
+      color: var(--text-muted);
+    }
+
     .workspace {
       background: var(--card-bg);
       border-radius: 12px;
@@ -315,7 +350,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 450px;
+      min-height: 480px;
       background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
       background-size: 20px 20px;
     }
@@ -482,23 +517,16 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* EDITOR MOBILE NATIVO ILUSTRADO */
-    .editor-mobile-preview {
+    /* CONTAINER DO EDITOR DE DESENHO VETORIAL INTERATIVO (CHEMDRAW) */
+    #jsme-app-wrapper {
       background: #ffffff;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      border-radius: 8px;
+      overflow: hidden;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      max-width: 90%;
-    }
-
-    .editor-mobile-img {
-      max-width: 100%;
-      max-height: 280px;
-      object-fit: contain;
+      padding: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   </style>
 </head>
@@ -525,21 +553,24 @@
     
     <div class="cards-grid">
       <div class="feature-card" onclick="navegarPara('moleculas')">
+        <span class="card-badge-tag">PC & Mobile</span>
         <div class="card-icon"><i class="fa-solid fa-diagram-project"></i></div>
         <div class="card-title">Moléculas (Busca 2D/3D)</div>
         <div class="card-desc">Gere fórmulas estruturais planas, modelos 3D interativos e imagens ajustadas para enunciados de prova por nome ou SMILES.</div>
       </div>
 
       <div class="feature-card" onclick="navegarPara('equacoes')">
+        <span class="card-badge-tag">PC & Mobile</span>
         <div class="card-icon"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
         <div class="card-title">Equações Químicas</div>
         <div class="card-desc">Monte equações completas com catalisadores sobre a seta, subscritos automáticos e recorte justo para Word/Docs.</div>
       </div>
 
       <div class="feature-card" onclick="navegarPara('editor')">
+        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Recomendado para PC</span>
         <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
-        <div class="card-title">Desenho Livre / SMILES</div>
-        <div class="card-desc">Construa ou cole estruturas autorais e personalizadas com visualização instantânea e recorte automático.</div>
+        <div class="card-title">Desenho Livre (ChemDraw)</div>
+        <div class="card-desc">Desenhe moléculas do zero com paleta visual completa de anéis, ligações e heteroátomos. <i>(Otimizado para Desktop)</i></div>
       </div>
     </div>
   </div>
@@ -677,26 +708,23 @@
     </div>
   </div>
 
-  <!-- ESTRUTURAS CUSTOMIZADAS / SMILES EDITOR -->
+  <!-- EDITOR DE ESTRUTURAS (DESENHO LIVRE CHEMDRAW INTERATIVO) -->
   <div id="view-editor" class="main-container hidden">
     <div class="sidebar">
       <div>
-        <div class="section-title"><i class="fa-solid fa-code"></i> Notação SMILES / Código</div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <input type="text" id="smiles-custom-input" placeholder="Cole notação SMILES ex: c1ccccc1" oninput="atualizarDesenhoCustom(this.value)">
-          <span style="font-size:0.75rem; color:var(--text-muted);">
-            Cole notações de estruturas personalizadas ou selecione uma estrutura abaixo para alterar instantaneamente.
-          </span>
-        </div>
+        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Ferramentas de Desenho</div>
+        <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+          Use a paleta para inserir anéis de benzeno, ligações duplas, apagar com a borracha ou alternar heteroátomos (N, O, S, Cl) na estrutura.
+        </p>
       </div>
 
       <div>
-        <div class="section-title"><i class="fa-solid fa-shapes"></i> Estruturas Rápidas</div>
+        <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Inserir Modelos</div>
         <div class="presets-grid">
-          <button class="btn-preset" onclick="carregarNoEditorCustom('c1ccccc1')">Anel Benzeno</button>
-          <button class="btn-preset" onclick="carregarNoEditorCustom('C1CCCCC1')">Ciclohexano</button>
-          <button class="btn-preset" onclick="carregarNoEditorCustom('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')">Ibuprofeno</button>
-          <button class="btn-preset" onclick="carregarNoEditorCustom('CC(=O)OC1=CC=CC=C1C(=O)O')">Aspirina</button>
+          <button class="btn-preset" onclick="carregarNoEditorJSME('c1ccccc1')">Anel Benzeno</button>
+          <button class="btn-preset" onclick="carregarNoEditorJSME('C1CCCCC1')">Ciclohexano</button>
+          <button class="btn-preset" onclick="carregarNoEditorJSME('C1CCCC1')">Ciclopentano</button>
+          <button class="btn-preset" onclick="carregarNoEditorJSME('CC(=O)O')">Ác. Acético</button>
         </div>
       </div>
 
@@ -711,13 +739,13 @@
 
     <div class="workspace">
       <div class="tabs-header">
-        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Renderizador Responsivo</span>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Mobile & Desktop</span>
+        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas Interativo de Desenho (ChemDraw)</span>
+        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-desktop"></i> Modo Otimizado para Desktop</span>
       </div>
 
       <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper">
-        <div class="editor-mobile-preview">
-          <img id="custom-editor-img" class="editor-mobile-img" src="" alt="Estrutura Personalizada">
+        <div id="jsme-app-wrapper">
+          <div id="jsme_container"></div>
         </div>
       </div>
 
@@ -739,7 +767,7 @@
     let moleculaAtual = {};
     let viewer3D = null;
     let eqParsedData = { reagentes: '', topCond: '', bottomCond: '', produtos: '' };
-    let smilesCustomAtual = 'c1ccccc1';
+    let jsmeApplet = null;
 
     const tradutores = {
       'aspirina': 'aspirin',
@@ -764,6 +792,21 @@
       'ibuprofeno': { nome: 'Ibuprofeno', cid: '3672', smiles: 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O', formula: 'C13H18O2' }
     };
 
+    /* INICIALIZAÇÃO GARANTIDA E FORÇADA DA PALETA DO CHEMDRAW (JSME) */
+    function iniciarEditorDesenhoDesktop() {
+      if (!jsmeApplet && typeof JSME !== 'undefined') {
+        jsmeApplet = new JSME("jsme_container", "640px", "430px", {
+          "options": "query,hydrogens,removehydrogens,autoecho,zoom"
+        });
+      }
+    }
+
+    function carregarNoEditorJSME(smiles) {
+      if (jsmeApplet) {
+        jsmeApplet.readGenericMolecularInput(smiles);
+      }
+    }
+
     function navegarPara(tela) {
       document.getElementById('view-home').classList.add('hidden');
       document.getElementById('view-moleculas').classList.add('hidden');
@@ -782,22 +825,11 @@
         }
       } else if (tela === 'editor') {
         document.getElementById('view-editor').classList.remove('hidden');
-        carregarNoEditorCustom(smilesCustomAtual);
+        setTimeout(() => iniciarEditorDesenhoDesktop(), 100);
       }
     }
 
-    /* EDITOR SMILES RESPONSIVO PARA MOBILE E DESKTOP */
-    function atualizarDesenhoCustom(val) {
-      smilesCustomAtual = val || 'c1ccccc1';
-      const img = document.getElementById('custom-editor-img');
-      img.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/${encodeURIComponent(smilesCustomAtual)}/PNG?record_type=2d&image_size=500x500`;
-    }
-
-    function carregarNoEditorCustom(smiles) {
-      document.getElementById('smiles-custom-input').value = smiles;
-      atualizarDesenhoCustom(smiles);
-    }
-
+    /* EXPORTAÇÃO DO DESENHO LIVRE DO DESKTOP */
     function setFundoEdit(tipo) {
       fundoEditAtual = tipo;
       document.getElementById('bg-edit-transp').classList.toggle('active', tipo === 'transp');
@@ -810,26 +842,33 @@
     }
 
     async function obterCanvasDesenhoEditor() {
-      const imgTarget = document.getElementById('custom-editor-img');
-      const res = await fetch(imgTarget.src);
-      const imgBlobOrigem = await res.blob();
-      const objectURL = URL.createObjectURL(imgBlobOrigem);
-
       return new Promise((resolve, reject) => {
+        if (!jsmeApplet) {
+          alert('O editor ainda está inicializando.');
+          return reject();
+        }
+        
+        const smiles = jsmeApplet.smiles();
+        if (!smiles) {
+          alert('Por favor, desenhe uma estrutura no canvas antes de exportar.');
+          return reject();
+        }
+
         const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/${encodeURIComponent(smiles)}/PNG?record_type=2d&image_size=500x500`;
+
         img.onload = () => {
           const rawCanvas = document.createElement('canvas');
           rawCanvas.width = img.width;
           rawCanvas.height = img.height;
           const ctx = rawCanvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(objectURL);
 
-          const finalCanvas = recortarCanvasJusto(rawCanvas, 12);
+          const finalCanvas = recortarCanvasJusto(rawCanvas, 10);
           resolve(finalCanvas);
         };
-        img.onerror = () => reject('Erro ao processar imagem.');
-        img.src = objectURL;
+        img.onerror = () => alert('Não foi possível processar a estrutura desenhada.');
       });
     }
 
