@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+  
+  <!-- Motor de Desenho Vetorial Nativo (ChemDoodle Web Editor) -->
+  <link rel="stylesheet" href="https://hub.chemdoodle.com/cui/v9.0.0/ChemDoodleWeb.css" type="text/css">
+  <link rel="stylesheet" href="https://hub.chemdoodle.com/cui/v9.0.0/uis/jquery-ui-1.11.4.custom.css" type="text/css">
+  <script type="text/javascript" src="https://hub.chemdoodle.com/cui/v9.0.0/ChemDoodleWeb.js"></script>
+  <script type="text/javascript" src="https://hub.chemdoodle.com/cui/v9.0.0/uis/ChemDoodleWeb-uis.js"></script>
+
   <style>
     :root {
       --bg-dark: #0b1120;
@@ -515,13 +522,12 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* IFRAME EMBUTIDO DO KETCHER / DESENHO INTERATIVO COMPLETO */
-    #chemdraw-iframe {
-      width: 100%;
-      height: 540px;
-      border: none;
-      border-radius: 8px;
+    /* CONTAINER DO EDITOR NATIVO JS */
+    #editor-wrapper {
       background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
   </style>
 </head>
@@ -562,7 +568,7 @@
       </div>
 
       <div class="feature-card" onclick="navegarPara('editor')">
-        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Paleta Integrada</span>
+        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Nativo 100% Ativo</span>
         <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
         <div class="card-title">Desenho Livre (ChemDraw)</div>
         <div class="card-desc">Desenhe moléculas do zero com paleta visual completa: anéis, ligações, heteroátomos e borracha.</div>
@@ -703,18 +709,18 @@
     </div>
   </div>
 
-  <!-- EDITOR DE ESTRUTURAS (DESENHO LIVRE COM PALETA GARANTIDA VIA KETCHER / EMBEDDED) -->
+  <!-- EDITOR DE ESTRUTURAS NATIVO (CHEMDOODLE EDITOR) -->
   <div id="view-editor" class="main-container hidden">
     <div class="sidebar">
       <div>
         <div class="section-title"><i class="fa-solid fa-toolbox"></i> Ferramentas de Desenho</div>
         <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-          Utilize as barras superior e lateral do editor para selecionar anéis aromáticos, ligações duplas, heteroátomos ou apagar partes do desenho.
+          Selecione anéis, ligações ou átomos na paleta superior do canvas para desenhar a sua molécula autoral.
         </p>
       </div>
 
       <div>
-        <div class="section-title"><i class="fa-solid fa-palette"></i> Fundo da Imagem</div>
+        <div class="section-title"><i class="fa-solid fa-palette"></i> Fundo para Exportação</div>
         <div class="bg-options">
           <button class="btn-bg active" id="bg-edit-transp" onclick="setFundoEdit('transp')">Transp.</button>
           <button class="btn-bg" id="bg-edit-branco" onclick="setFundoEdit('branco')">Branco</button>
@@ -724,18 +730,26 @@
 
     <div class="workspace">
       <div class="tabs-header">
-        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Editor de Estruturas Interativo</span>
-        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor Ativo</span>
+        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas de Desenho Interativo</span>
+        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor JavaScript Nativo</span>
       </div>
 
       <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper">
-        <iframe id="chemdraw-iframe" src="https://lifescience.opensource.epam.com/ketcher/demo.html"></iframe>
+        <div id="editor-wrapper">
+          <script>
+            let sketcher = new ChemDoodle.SketcherCanvas('sketcherCanvas', 640, 440, {useCalculators: false});
+            sketcher.styles.atoms_displayTerminalCarbonLabels_2D = true;
+            sketcher.styles.atoms_useSubscripts_2D = true;
+            sketcher.repaint();
+          </script>
+        </div>
       </div>
 
       <div class="action-bar">
         <span style="font-size: 0.85rem; color: var(--text-muted);">Desenho Autoral: <strong>Corte Automático Ativo</strong></span>
         <div class="btn-group">
-          <button class="btn-action btn-primary" onclick="alert('No editor ChemDraw, utilize o botão Save / Export no topo do canvas para descarregar o PNG com fundo limpo.')"><i class="fa-solid fa-download"></i> Instruções de Exportação</button>
+          <button class="btn-action" onclick="copiarDesenhoEditor()"><i class="fa-regular fa-copy"></i> Copiar Imagem</button>
+          <button class="btn-action btn-primary" onclick="baixarDesenhoEditor()"><i class="fa-solid fa-download"></i> Baixar PNG</button>
         </div>
       </div>
     </div>
@@ -791,6 +805,9 @@
         }
       } else if (tela === 'editor') {
         document.getElementById('view-editor').classList.remove('hidden');
+        if (typeof sketcher !== 'undefined') {
+          sketcher.repaint();
+        }
       }
     }
 
@@ -798,6 +815,43 @@
       fundoEditAtual = tipo;
       document.getElementById('bg-edit-transp').classList.toggle('active', tipo === 'transp');
       document.getElementById('bg-edit-branco').classList.toggle('active', tipo === 'branco');
+      
+      const wrapper = document.getElementById('canvas-edit-wrapper');
+      wrapper.className = 'canvas-container';
+      if (tipo === 'transp') wrapper.classList.add('bg-checkerboard');
+      if (tipo === 'branco') wrapper.classList.add('bg-white-mode');
+    }
+
+    async function obterCanvasDesenhoEditor() {
+      return new Promise((resolve, reject) => {
+        const rawCanvas = document.getElementById('sketcherCanvas');
+        if (!rawCanvas) return reject();
+
+        const finalCanvas = recortarCanvasJusto(rawCanvas, 10);
+        resolve(finalCanvas);
+      });
+    }
+
+    async function baixarDesenhoEditor() {
+      try {
+        const canvas = await obterCanvasDesenhoEditor();
+        const link = document.createElement('a');
+        link.download = `Estrutura_Autoral.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (e) {}
+    }
+
+    async function copiarDesenhoEditor() {
+      try {
+        const canvas = await obterCanvasDesenhoEditor();
+        canvas.toBlob(async (blob) => {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          alert('Estrutura copiada com sucesso! Basta colar (Ctrl+V) no Word ou Google Docs.');
+        });
+      } catch (e) {}
     }
 
     /* PARSER DE EQUAÇÕES AVANÇADO */
@@ -1140,6 +1194,7 @@
 
       let bg = fundoAtual;
       if (!document.getElementById('view-equacoes').classList.contains('hidden')) bg = fundoEqAtual;
+      if (!document.getElementById('view-editor').classList.contains('hidden')) bg = fundoEditAtual;
 
       if (bg === 'branco') {
         cropCtx.fillStyle = '#ffffff';
