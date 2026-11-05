@@ -76,7 +76,7 @@
       font-size: 0.8rem;
     }
 
-    /* PÁGINA INICIAL / HUB DE SELEÇÃO */
+    /* PÁGINA INICIAL */
     .home-selection {
       max-width: 1050px;
       margin: 50px auto;
@@ -515,7 +515,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* PALETA E CANVAS DE DESENHO CHEMSNAP NATIVO */
+    /* BARRA DE FERRAMENTAS DO CHEMSNAP */
     .editor-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -525,6 +525,7 @@
       border-radius: 8px;
       border: 1px solid var(--border);
       margin-bottom: 10px;
+      user-select: none;
     }
 
     .tool-btn {
@@ -552,6 +553,8 @@
       border-radius: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
       cursor: crosshair;
+      touch-action: none;
+      user-select: none;
     }
   </style>
 </head>
@@ -592,10 +595,10 @@
       </div>
 
       <div class="feature-card" onclick="navegarPara('editor')">
-        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Nativo 100% Funcional</span>
+        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Desenho Direto</span>
         <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
         <div class="card-title">Desenho Livre (ChemDraw)</div>
-        <div class="card-desc">Desenhe moléculas do zero com paleta visual completa de anéis, ligações, heteroátomos e borracha.</div>
+        <div class="card-desc">Desenhe moléculas do zero no canvas: arraste para criar ligações e clique para carimbar anéis ou átomos.</div>
       </div>
     </div>
   </div>
@@ -733,19 +736,22 @@
     </div>
   </div>
 
-  <!-- EDITOR DE DESENHO LIVRE NATIVO (CHEMSNAP DRAW 100% GARANTIDO) -->
+  <!-- EDITOR DE DESENHO LIVRE NATIVO COMPLETO -->
   <div id="view-editor" class="main-container hidden">
     <div class="sidebar">
       <div>
-        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Como Usar</div>
+        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Como Desenhar</div>
         <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-          Escolha uma ferramenta na paleta superior e clique no canvas para adicionar anéis, ligações ou heteroátomos instantaneamente.
+          • <strong>Ligações (Simples/Dupla):</strong> Arraste do ponto A até o ponto B no canvas.<br>
+          • <strong>Anéis e Átomos:</strong> Clique com o mouse para carimbar.<br>
+          • <strong>Borracha:</strong> Clique no elemento que deseja apagar.
         </p>
       </div>
 
       <div>
-        <div class="section-title"><i class="fa-solid fa-trash"></i> Limpar Canvas</div>
-        <button class="btn-preset" style="width:100%; text-align:center;" onclick="limparCanvasDesenho()"><i class="fa-solid fa-rotate-left"></i> Limpar Desenho</button>
+        <div class="section-title"><i class="fa-solid fa-rotate-left"></i> Ações do Canvas</div>
+        <button class="btn-preset" style="width:100%; text-align:center; margin-bottom:8px;" onclick="desfazerUltimoDesenho()"><i class="fa-solid fa-undo"></i> Desfazer Último</button>
+        <button class="btn-preset" style="width:100%; text-align:center;" onclick="limparCanvasDesenho()"><i class="fa-solid fa-trash"></i> Limpar Tudo</button>
       </div>
 
       <div>
@@ -760,17 +766,16 @@
     <div class="workspace">
       <div class="tabs-header">
         <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas de Desenho Interativo</span>
-        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor JavaScript Nativo Ativo</span>
+        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Modo Pointer Events Ativo</span>
       </div>
 
       <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper" style="flex-direction: column; padding: 15px;">
-        <!-- PALETA VISUAL COMPLETA COM FERRAMENTAS -->
         <div class="editor-toolbar">
-          <button class="tool-btn active" id="tool-benzeno" onclick="selecionarFerramenta('benzeno')"><i class="fa-solid fa-circle-notch"></i> Benzeno</button>
+          <button class="tool-btn active" id="tool-lig-simples" onclick="selecionarFerramenta('lig-simples')">— Liga Simples</button>
+          <button class="tool-btn" id="tool-lig-dupla" onclick="selecionarFerramenta('lig-dupla')">═ Liga Dupla</button>
+          <button class="tool-btn" id="tool-benzeno" onclick="selecionarFerramenta('benzeno')"><i class="fa-solid fa-circle-notch"></i> Benzeno</button>
           <button class="tool-btn" id="tool-ciclohexano" onclick="selecionarFerramenta('ciclohexano')"><i class="fa-solid fa-hexagon"></i> Ciclohexano</button>
           <button class="tool-btn" id="tool-ciclopentano" onclick="selecionarFerramenta('ciclopentano')"><i class="fa-solid fa-shapes"></i> Ciclopentano</button>
-          <button class="tool-btn" id="tool-lig-simples" onclick="selecionarFerramenta('lig-simples')">— Liga Simples</button>
-          <button class="tool-btn" id="tool-lig-dupla" onclick="selecionarFerramenta('lig-dupla')">═ Liga Dupla</button>
           <button class="tool-btn" id="tool-atom-o" onclick="selecionarFerramenta('atom-o')"><strong>O</strong> (Oxigênio)</button>
           <button class="tool-btn" id="tool-atom-n" onclick="selecionarFerramenta('atom-n')"><strong>N</strong> (Nitrogênio)</button>
           <button class="tool-btn" id="tool-atom-cl" onclick="selecionarFerramenta('atom-cl')"><strong>Cl</strong> (Cloro)</button>
@@ -799,9 +804,13 @@
     let viewer3D = null;
     let eqParsedData = { reagentes: '', topCond: '', bottomCond: '', produtos: '' };
 
-    /* LÓGICA DO CANVAS DE DESENHO NATIVO CHEMSNAP */
-    let ferramentaAtiva = 'benzeno';
+    /* MOTOR DE DESENHO LIVRE UNIFICADO (POINTER EVENTS) */
+    let ferramentaAtiva = 'lig-simples';
     let elementosDesenho = [];
+    let desenhando = false;
+    let startX = 0, startY = 0;
+    let currentX = 0, currentY = 0;
+    let canvasIniciado = false;
 
     function selecionarFerramenta(tool) {
       ferramentaAtiva = tool;
@@ -809,22 +818,84 @@
       document.getElementById(`tool-${tool}`).classList.add('active');
     }
 
-    function inicializarCanvasNativo() {
-      const cvs = document.getElementById('chemsnap-canvas');
-      const ctx = cvs.getContext('2d');
+    function obterPosicao(e, cvs) {
+      const rect = cvs.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
 
-      cvs.onmousedown = function(e) {
-        const rect = cvs.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    function inicializarCanvasNativo() {
+      if (canvasIniciado) return;
+      canvasIniciado = true;
+
+      const cvs = document.getElementById('chemsnap-canvas');
+
+      cvs.addEventListener('pointerdown', (e) => {
+        cvs.setPointerCapture(e.pointerId);
+        const pos = obterPosicao(e, cvs);
+        desenhando = true;
+        startX = pos.x;
+        startY = pos.y;
+        currentX = pos.x;
+        currentY = pos.y;
 
         if (ferramentaAtiva === 'borracha') {
-          elementosDesenho = elementosDesenho.filter(el => Math.hypot(el.x - x, el.y - y) > 30);
+          apagarElemento(pos.x, pos.y);
+        }
+      });
+
+      cvs.addEventListener('pointermove', (e) => {
+        if (!desenhando) return;
+        const pos = obterPosicao(e, cvs);
+        currentX = pos.x;
+        currentY = pos.y;
+
+        if (ferramentaAtiva === 'borracha') {
+          apagarElemento(pos.x, pos.y);
         } else {
-          elementosDesenho.push({ tipo: ferramentaAtiva, x: x, y: y });
+          renderizarDesenhoCanvas();
+        }
+      });
+
+      const finalizar = (e) => {
+        if (!desenhando) return;
+        desenhando = false;
+        try { cvs.releasePointerCapture(e.pointerId); } catch(err) {}
+
+        if (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla') {
+          const dist = Math.hypot(currentX - startX, currentY - startY);
+          if (dist > 8) {
+            elementosDesenho.push({
+              tipo: ferramentaAtiva,
+              x1: startX, y1: startY,
+              x2: currentX, y2: currentY
+            });
+          }
+        } else if (ferramentaAtiva !== 'borracha') {
+          elementosDesenho.push({
+            tipo: ferramentaAtiva,
+            x: startX, y: startY
+          });
         }
         renderizarDesenhoCanvas();
       };
+
+      cvs.addEventListener('pointerup', finalizar);
+      cvs.addEventListener('pointercancel', finalizar);
+    }
+
+    function apagarElemento(x, y) {
+      elementosDesenho = elementosDesenho.filter(el => {
+        if (el.x1 !== undefined) {
+          const midX = (el.x1 + el.x2) / 2;
+          const midY = (el.y1 + el.y2) / 2;
+          return Math.hypot(midX - x, midY - y) > 30;
+        }
+        return Math.hypot(el.x - x, el.y - y) > 30;
+      });
+      renderizarDesenhoCanvas();
     }
 
     function desenharAnelPoligono(ctx, x, y, lados, raio, comAromatico = false) {
@@ -859,25 +930,31 @@
       }
 
       elementosDesenho.forEach(el => {
-        if (el.tipo === 'benzeno') desenharAnelPoligono(ctx, el.x, el.y, 6, 40, true);
-        if (el.tipo === 'ciclohexano') desenharAnelPoligono(ctx, el.x, el.y, 6, 40, false);
-        if (el.tipo === 'ciclopentano') desenharAnelPoligono(ctx, el.x, el.y, 5, 35, false);
+        if (el.tipo === 'benzeno') desenharAnelPoligono(ctx, el.x, el.y, 6, 38, true);
+        if (el.tipo === 'ciclohexano') desenharAnelPoligono(ctx, el.x, el.y, 6, 38, false);
+        if (el.tipo === 'ciclopentano') desenharAnelPoligono(ctx, el.x, el.y, 5, 32, false);
 
         if (el.tipo === 'lig-simples') {
           ctx.beginPath();
-          ctx.moveTo(el.x - 25, el.y);
-          ctx.lineTo(el.x + 25, el.y);
+          ctx.moveTo(el.x1, el.y1);
+          ctx.lineTo(el.x2, el.y2);
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = 2.5;
           ctx.stroke();
         }
 
         if (el.tipo === 'lig-dupla') {
+          const dx = el.x2 - el.x1;
+          const dy = el.y2 - el.y1;
+          const len = Math.hypot(dx, dy);
+          const nx = (-dy / len) * 3;
+          const ny = (dx / len) * 3;
+
           ctx.beginPath();
-          ctx.moveTo(el.x - 25, el.y - 4);
-          ctx.lineTo(el.x + 25, el.y - 4);
-          ctx.moveTo(el.x - 25, el.y + 4);
-          ctx.lineTo(el.x + 25, el.y + 4);
+          ctx.moveTo(el.x1 + nx, el.y1 + ny);
+          ctx.lineTo(el.x2 + nx, el.y2 + ny);
+          ctx.moveTo(el.x1 - nx, el.y1 - ny);
+          ctx.lineTo(el.x2 - nx, el.y2 - ny);
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = 2.5;
           ctx.stroke();
@@ -885,13 +962,30 @@
 
         if (el.tipo.startsWith('atom-')) {
           let simbolo = el.tipo.replace('atom-', '').toUpperCase();
-          ctx.font = 'bold 24px Arial';
+          ctx.font = 'bold 22px Arial';
           ctx.fillStyle = '#000000';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(simbolo, el.x, el.y);
         }
       });
+
+      // Prévia interativa em verde ao arrastar a linha
+      if (desenhando && (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla')) {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(currentX, currentY);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    function desfazerUltimoDesenho() {
+      elementosDesenho.pop();
+      renderizarDesenhoCanvas();
     }
 
     function limparCanvasDesenho() {
@@ -957,8 +1051,10 @@
         }
       } else if (tela === 'editor') {
         document.getElementById('view-editor').classList.remove('hidden');
-        inicializarCanvasNativo();
-        renderizarDesenhoCanvas();
+        setTimeout(() => {
+          inicializarCanvasNativo();
+          renderizarDesenhoCanvas();
+        }, 50);
       }
     }
 
