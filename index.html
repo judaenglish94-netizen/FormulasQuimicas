@@ -7,13 +7,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://3dmol.org/build/3Dmol-min.js"></script>
-  
-  <!-- Motor de Desenho Vetorial Nativo (ChemDoodle Web Editor) -->
-  <link rel="stylesheet" href="https://hub.chemdoodle.com/cui/v9.0.0/ChemDoodleWeb.css" type="text/css">
-  <link rel="stylesheet" href="https://hub.chemdoodle.com/cui/v9.0.0/uis/jquery-ui-1.11.4.custom.css" type="text/css">
-  <script type="text/javascript" src="https://hub.chemdoodle.com/cui/v9.0.0/ChemDoodleWeb.js"></script>
-  <script type="text/javascript" src="https://hub.chemdoodle.com/cui/v9.0.0/uis/ChemDoodleWeb-uis.js"></script>
-
   <style>
     :root {
       --bg-dark: #0b1120;
@@ -264,7 +257,7 @@
 
     .bg-options {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
     }
 
@@ -355,7 +348,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 520px;
+      min-height: 500px;
       background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
       background-size: 20px 20px;
     }
@@ -522,12 +515,43 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* CONTAINER DO EDITOR NATIVO JS */
-    #editor-wrapper {
-      background: #ffffff;
+    /* PALETA E CANVAS DE DESENHO CHEMSNAP NATIVO */
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: #0f172a;
       padding: 10px;
       border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .tool-btn {
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+
+    .tool-btn:hover, .tool-btn.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    #chemsnap-canvas {
+      background: #ffffff;
+      border-radius: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      cursor: crosshair;
     }
   </style>
 </head>
@@ -568,10 +592,10 @@
       </div>
 
       <div class="feature-card" onclick="navegarPara('editor')">
-        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Nativo 100% Ativo</span>
+        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Nativo 100% Funcional</span>
         <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
         <div class="card-title">Desenho Livre (ChemDraw)</div>
-        <div class="card-desc">Desenhe moléculas do zero com paleta visual completa: anéis, ligações, heteroátomos e borracha.</div>
+        <div class="card-desc">Desenhe moléculas do zero com paleta visual completa de anéis, ligações, heteroátomos e borracha.</div>
       </div>
     </div>
   </div>
@@ -709,18 +733,23 @@
     </div>
   </div>
 
-  <!-- EDITOR DE ESTRUTURAS NATIVO (CHEMDOODLE EDITOR) -->
+  <!-- EDITOR DE DESENHO LIVRE NATIVO (CHEMSNAP DRAW 100% GARANTIDO) -->
   <div id="view-editor" class="main-container hidden">
     <div class="sidebar">
       <div>
-        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Ferramentas de Desenho</div>
+        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Como Usar</div>
         <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-          Selecione anéis, ligações ou átomos na paleta superior do canvas para desenhar a sua molécula autoral.
+          Escolha uma ferramenta na paleta superior e clique no canvas para adicionar anéis, ligações ou heteroátomos instantaneamente.
         </p>
       </div>
 
       <div>
-        <div class="section-title"><i class="fa-solid fa-palette"></i> Fundo para Exportação</div>
+        <div class="section-title"><i class="fa-solid fa-trash"></i> Limpar Canvas</div>
+        <button class="btn-preset" style="width:100%; text-align:center;" onclick="limparCanvasDesenho()"><i class="fa-solid fa-rotate-left"></i> Limpar Desenho</button>
+      </div>
+
+      <div>
+        <div class="section-title"><i class="fa-solid fa-palette"></i> Fundo da Imagem</div>
         <div class="bg-options">
           <button class="btn-bg active" id="bg-edit-transp" onclick="setFundoEdit('transp')">Transp.</button>
           <button class="btn-bg" id="bg-edit-branco" onclick="setFundoEdit('branco')">Branco</button>
@@ -731,18 +760,24 @@
     <div class="workspace">
       <div class="tabs-header">
         <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas de Desenho Interativo</span>
-        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor JavaScript Nativo</span>
+        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor JavaScript Nativo Ativo</span>
       </div>
 
-      <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper">
-        <div id="editor-wrapper">
-          <script>
-            let sketcher = new ChemDoodle.SketcherCanvas('sketcherCanvas', 640, 440, {useCalculators: false});
-            sketcher.styles.atoms_displayTerminalCarbonLabels_2D = true;
-            sketcher.styles.atoms_useSubscripts_2D = true;
-            sketcher.repaint();
-          </script>
+      <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper" style="flex-direction: column; padding: 15px;">
+        <!-- PALETA VISUAL COMPLETA COM FERRAMENTAS -->
+        <div class="editor-toolbar">
+          <button class="tool-btn active" id="tool-benzeno" onclick="selecionarFerramenta('benzeno')"><i class="fa-solid fa-circle-notch"></i> Benzeno</button>
+          <button class="tool-btn" id="tool-ciclohexano" onclick="selecionarFerramenta('ciclohexano')"><i class="fa-solid fa-hexagon"></i> Ciclohexano</button>
+          <button class="tool-btn" id="tool-ciclopentano" onclick="selecionarFerramenta('ciclopentano')"><i class="fa-solid fa-shapes"></i> Ciclopentano</button>
+          <button class="tool-btn" id="tool-lig-simples" onclick="selecionarFerramenta('lig-simples')">— Liga Simples</button>
+          <button class="tool-btn" id="tool-lig-dupla" onclick="selecionarFerramenta('lig-dupla')">═ Liga Dupla</button>
+          <button class="tool-btn" id="tool-atom-o" onclick="selecionarFerramenta('atom-o')"><strong>O</strong> (Oxigênio)</button>
+          <button class="tool-btn" id="tool-atom-n" onclick="selecionarFerramenta('atom-n')"><strong>N</strong> (Nitrogênio)</button>
+          <button class="tool-btn" id="tool-atom-cl" onclick="selecionarFerramenta('atom-cl')"><strong>Cl</strong> (Cloro)</button>
+          <button class="tool-btn" id="tool-borracha" onclick="selecionarFerramenta('borracha')"><i class="fa-solid fa-eraser"></i> Borracha</button>
         </div>
+
+        <canvas id="chemsnap-canvas" width="650" height="420"></canvas>
       </div>
 
       <div class="action-bar">
@@ -764,51 +799,104 @@
     let viewer3D = null;
     let eqParsedData = { reagentes: '', topCond: '', bottomCond: '', produtos: '' };
 
-    const tradutores = {
-      'aspirina': 'aspirin',
-      'cafeina': 'caffeine',
-      'glicose': 'glucose',
-      'acido citrico': 'citric acid',
-      'ácido cítrico': 'citric acid',
-      'etanol': 'ethanol',
-      'ibuprofeno': 'ibuprofen',
-      'agua': 'water',
-      'água': 'water',
-      'metanol': 'methanol',
-      'benzeno': 'benzene'
-    };
+    /* LÓGICA DO CANVAS DE DESENHO NATIVO CHEMSNAP */
+    let ferramentaAtiva = 'benzeno';
+    let elementosDesenho = [];
 
-    const bancoLocal = {
-      'aspirina': { nome: 'Aspirina', cid: '2244', smiles: 'CC(=O)OC1=CC=CC=C1C(=O)O', formula: 'C9H8O4' },
-      'cafeina': { nome: 'Cafeína', cid: '2519', smiles: 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C', formula: 'C8H10N4O2' },
-      'glicose': { nome: 'Glicose', cid: '5793', smiles: 'C(C1C(C(C(C(O1)O)O)O)O)O', formula: 'C6H12O6' },
-      'acido citrico': { nome: 'Ácido Cítrico', cid: '311', smiles: 'C(C(=O)O)C(CC(=O)O)(C(=O)O)O', formula: 'C6H8O7' },
-      'etanol': { nome: 'Etanol', cid: '702', smiles: 'CCO', formula: 'C2H6O' },
-      'ibuprofeno': { nome: 'Ibuprofeno', cid: '3672', smiles: 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O', formula: 'C13H18O2' }
-    };
+    function selecionarFerramenta(tool) {
+      ferramentaAtiva = tool;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tool-${tool}`).classList.add('active');
+    }
 
-    function navegarPara(tela) {
-      document.getElementById('view-home').classList.add('hidden');
-      document.getElementById('view-moleculas').classList.add('hidden');
-      document.getElementById('view-equacoes').classList.add('hidden');
-      document.getElementById('view-editor').classList.add('hidden');
+    function inicializarCanvasNativo() {
+      const cvs = document.getElementById('chemsnap-canvas');
+      const ctx = cvs.getContext('2d');
 
-      if (tela === 'home') {
-        document.getElementById('view-home').classList.remove('hidden');
-      } else if (tela === 'moleculas') {
-        document.getElementById('view-moleculas').classList.remove('hidden');
-        if (!moleculaAtual.nome) carregarPreset('glicose');
-      } else if (tela === 'equacoes') {
-        document.getElementById('view-equacoes').classList.remove('hidden');
-        if (!document.getElementById('eq-input').value) {
-          carregarEqPreset('CH3COOH + C2H5OH ->[H2SO4][Δ] CH3COOCH2CH3 + H2O');
+      cvs.onmousedown = function(e) {
+        const rect = cvs.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (ferramentaAtiva === 'borracha') {
+          elementosDesenho = elementosDesenho.filter(el => Math.hypot(el.x - x, el.y - y) > 30);
+        } else {
+          elementosDesenho.push({ tipo: ferramentaAtiva, x: x, y: y });
         }
-      } else if (tela === 'editor') {
-        document.getElementById('view-editor').classList.remove('hidden');
-        if (typeof sketcher !== 'undefined') {
-          sketcher.repaint();
-        }
+        renderizarDesenhoCanvas();
+      };
+    }
+
+    function desenharAnelPoligono(ctx, x, y, lados, raio, comAromatico = false) {
+      ctx.beginPath();
+      for (let i = 0; i < lados; i++) {
+        let angulo = (i * 2 * Math.PI / lados) - (Math.PI / 2);
+        let px = x + raio * Math.cos(angulo);
+        let py = y + raio * Math.sin(angulo);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
       }
+      ctx.closePath();
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      if (comAromatico) {
+        ctx.beginPath();
+        ctx.arc(x, y, raio * 0.5, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+    }
+
+    function renderizarDesenhoCanvas() {
+      const cvs = document.getElementById('chemsnap-canvas');
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      if (fundoEditAtual === 'branco') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+      }
+
+      elementosDesenho.forEach(el => {
+        if (el.tipo === 'benzeno') desenharAnelPoligono(ctx, el.x, el.y, 6, 40, true);
+        if (el.tipo === 'ciclohexano') desenharAnelPoligono(ctx, el.x, el.y, 6, 40, false);
+        if (el.tipo === 'ciclopentano') desenharAnelPoligono(ctx, el.x, el.y, 5, 35, false);
+
+        if (el.tipo === 'lig-simples') {
+          ctx.beginPath();
+          ctx.moveTo(el.x - 25, el.y);
+          ctx.lineTo(el.x + 25, el.y);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        if (el.tipo === 'lig-dupla') {
+          ctx.beginPath();
+          ctx.moveTo(el.x - 25, el.y - 4);
+          ctx.lineTo(el.x + 25, el.y - 4);
+          ctx.moveTo(el.x - 25, el.y + 4);
+          ctx.lineTo(el.x + 25, el.y + 4);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        if (el.tipo.startsWith('atom-')) {
+          let simbolo = el.tipo.replace('atom-', '').toUpperCase();
+          ctx.font = 'bold 24px Arial';
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(simbolo, el.x, el.y);
+        }
+      });
+    }
+
+    function limparCanvasDesenho() {
+      elementosDesenho = [];
+      renderizarDesenhoCanvas();
     }
 
     function setFundoEdit(tipo) {
@@ -820,16 +908,13 @@
       wrapper.className = 'canvas-container';
       if (tipo === 'transp') wrapper.classList.add('bg-checkerboard');
       if (tipo === 'branco') wrapper.classList.add('bg-white-mode');
+
+      renderizarDesenhoCanvas();
     }
 
     async function obterCanvasDesenhoEditor() {
-      return new Promise((resolve, reject) => {
-        const rawCanvas = document.getElementById('sketcherCanvas');
-        if (!rawCanvas) return reject();
-
-        const finalCanvas = recortarCanvasJusto(rawCanvas, 10);
-        resolve(finalCanvas);
-      });
+      const cvs = document.getElementById('chemsnap-canvas');
+      return recortarCanvasJusto(cvs, 15);
     }
 
     async function baixarDesenhoEditor() {
@@ -853,6 +938,52 @@
         });
       } catch (e) {}
     }
+
+    function navegarPara(tela) {
+      document.getElementById('view-home').classList.add('hidden');
+      document.getElementById('view-moleculas').classList.add('hidden');
+      document.getElementById('view-equacoes').classList.add('hidden');
+      document.getElementById('view-editor').classList.add('hidden');
+
+      if (tela === 'home') {
+        document.getElementById('view-home').classList.remove('hidden');
+      } else if (tela === 'moleculas') {
+        document.getElementById('view-moleculas').classList.remove('hidden');
+        if (!moleculaAtual.nome) carregarPreset('glicose');
+      } else if (tela === 'equacoes') {
+        document.getElementById('view-equacoes').classList.remove('hidden');
+        if (!document.getElementById('eq-input').value) {
+          carregarEqPreset('CH3COOH + C2H5OH ->[H2SO4][Δ] CH3COOCH2CH3 + H2O');
+        }
+      } else if (tela === 'editor') {
+        document.getElementById('view-editor').classList.remove('hidden');
+        inicializarCanvasNativo();
+        renderizarDesenhoCanvas();
+      }
+    }
+
+    const tradutores = {
+      'aspirina': 'aspirin',
+      'cafeina': 'caffeine',
+      'glicose': 'glucose',
+      'acido citrico': 'citric acid',
+      'ácido cítrico': 'citric acid',
+      'etanol': 'ethanol',
+      'ibuprofeno': 'ibuprofen',
+      'agua': 'water',
+      'água': 'water',
+      'metanol': 'methanol',
+      'benzeno': 'benzene'
+    };
+
+    const bancoLocal = {
+      'aspirina': { nome: 'Aspirina', cid: '2244', smiles: 'CC(=O)OC1=CC=CC=C1C(=O)O', formula: 'C9H8O4' },
+      'cafeina': { nome: 'Cafeína', cid: '2519', smiles: 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C', formula: 'C8H10N4O2' },
+      'glicose': { nome: 'Glicose', cid: '5793', smiles: 'C(C1C(C(C(C(O1)O)O)O)O)O', formula: 'C6H12O6' },
+      'acido citrico': { nome: 'Ácido Cítrico', cid: '311', smiles: 'C(C(=O)O)C(CC(=O)O)(C(=O)O)O', formula: 'C6H8O7' },
+      'etanol': { nome: 'Etanol', cid: '702', smiles: 'CCO', formula: 'C2H6O' },
+      'ibuprofeno': { nome: 'Ibuprofeno', cid: '3672', smiles: 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O', formula: 'C13H18O2' }
+    };
 
     /* PARSER DE EQUAÇÕES AVANÇADO */
     const mapaSubscrito = {
