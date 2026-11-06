@@ -515,17 +515,35 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* BARRA DE FERRAMENTAS DO CHEMSNAP */
-    .editor-toolbar {
+    /* TOOLBARS E LAYOUT ESTILO KINGDRAW */
+    .editor-topbar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+      align-items: center;
+      gap: 8px;
       background: #0f172a;
-      padding: 10px;
+      padding: 10px 15px;
       border-radius: 8px;
       border: 1px solid var(--border);
       margin-bottom: 10px;
-      user-select: none;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-section-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+
+    .tool-box {
+      display: flex;
+      gap: 4px;
+      background: #151d30;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
 
     .tool-btn {
@@ -555,6 +573,76 @@
       cursor: crosshair;
       touch-action: none;
       user-select: none;
+    }
+
+    /* MODAL DA BIBLIOTECA DE GRUPOS FUNCIONAIS */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 480px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .btn-group-item {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: monospace;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .btn-group-item:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.1);
     }
   </style>
 </head>
@@ -595,10 +683,10 @@
       </div>
 
       <div class="feature-card" onclick="navegarPara('editor')">
-        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Desenho Direto</span>
+        <span class="card-badge-tag" style="border-color: var(--accent); color: var(--accent);">Estilo KingDraw</span>
         <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
         <div class="card-title">Desenho Livre (ChemDraw)</div>
-        <div class="card-desc">Desenhe moléculas do zero no canvas: arraste para criar ligações e clique para carimbar anéis ou átomos.</div>
+        <div class="card-desc">Desenhe moléculas do zero: luva de pan, ligações retas e curvas, caixas de ferramentas e biblioteca de grupos.</div>
       </div>
     </div>
   </div>
@@ -736,15 +824,15 @@
     </div>
   </div>
 
-  <!-- EDITOR DE DESENHO LIVRE NATIVO COMPLETO -->
+  <!-- EDITOR DE DESENHO LIVRE NATIVO ESTILO KINGDRAW -->
   <div id="view-editor" class="main-container hidden">
     <div class="sidebar">
       <div>
-        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Como Desenhar</div>
+        <div class="section-title"><i class="fa-solid fa-toolbox"></i> Como Usar</div>
         <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-          • <strong>Ligações (Simples/Dupla):</strong> Arraste do ponto A até o ponto B no canvas.<br>
-          • <strong>Anéis e Átomos:</strong> Clique com o mouse para carimbar.<br>
-          • <strong>Borracha:</strong> Clique no elemento que deseja apagar.
+          • <strong>Luva (Pan):</strong> Arraste o canvas para mover o desenho.<br>
+          • <strong>Ligações (Reta/Curva):</strong> Arraste do ponto A ao B.<br>
+          • <strong>Modelos & Grupos:</strong> Clique para estampar no canvas.
         </p>
       </div>
 
@@ -765,21 +853,39 @@
 
     <div class="workspace">
       <div class="tabs-header">
-        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas de Desenho Interativo</span>
-        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Modo Pointer Events Ativo</span>
+        <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-pen-ruler"></i> Canvas Interativo ChemDraw / KingDraw</span>
+        <span style="font-size: 0.8rem; color: var(--accent);"><i class="fa-solid fa-circle-check"></i> Motor Ativo</span>
       </div>
 
       <div class="canvas-container bg-checkerboard" id="canvas-edit-wrapper" style="flex-direction: column; padding: 15px;">
-        <div class="editor-toolbar">
-          <button class="tool-btn active" id="tool-lig-simples" onclick="selecionarFerramenta('lig-simples')">— Liga Simples</button>
-          <button class="tool-btn" id="tool-lig-dupla" onclick="selecionarFerramenta('lig-dupla')">═ Liga Dupla</button>
-          <button class="tool-btn" id="tool-benzeno" onclick="selecionarFerramenta('benzeno')"><i class="fa-solid fa-circle-notch"></i> Benzeno</button>
-          <button class="tool-btn" id="tool-ciclohexano" onclick="selecionarFerramenta('ciclohexano')"><i class="fa-solid fa-hexagon"></i> Ciclohexano</button>
-          <button class="tool-btn" id="tool-ciclopentano" onclick="selecionarFerramenta('ciclopentano')"><i class="fa-solid fa-shapes"></i> Ciclopentano</button>
-          <button class="tool-btn" id="tool-atom-o" onclick="selecionarFerramenta('atom-o')"><strong>O</strong> (Oxigênio)</button>
-          <button class="tool-btn" id="tool-atom-n" onclick="selecionarFerramenta('atom-n')"><strong>N</strong> (Nitrogênio)</button>
-          <button class="tool-btn" id="tool-atom-cl" onclick="selecionarFerramenta('atom-cl')"><strong>Cl</strong> (Cloro)</button>
-          <button class="tool-btn" id="tool-borracha" onclick="selecionarFerramenta('borracha')"><i class="fa-solid fa-eraser"></i> Borracha</button>
+        <!-- BARRA SUPERIOR ORGANIZADA COM CAIXAS DE FERRAMENTAS -->
+        <div class="editor-topbar">
+          <!-- CAIXA DE FERRAMENTAS DE EDIÇÃO -->
+          <span class="toolbar-section-label">Edição:</span>
+          <div class="tool-box">
+            <button class="tool-btn" id="tool-luva" onclick="selecionarFerramenta('luva')" title="Luva de Mover"><i class="fa-solid fa-hand"></i></button>
+            <button class="tool-btn active" id="tool-lig-simples" onclick="selecionarFerramenta('lig-simples')" title="Liga Simples">—</button>
+            <button class="tool-btn" id="tool-lig-dupla" onclick="selecionarFerramenta('lig-dupla')" title="Liga Dupla">═</button>
+            <button class="tool-btn" id="tool-lig-curva" onclick="selecionarFerramenta('lig-curva')" title="Linha Ondulada/Curva">〜</button>
+            <button class="tool-btn" id="tool-borracha" onclick="selecionarFerramenta('borracha')" title="Borracha"><i class="fa-solid fa-eraser"></i></button>
+          </div>
+
+          <!-- CAIXA DE MODELOS NO TOPO -->
+          <span class="toolbar-section-label" style="margin-left:10px;">Modelos:</span>
+          <div class="tool-box">
+            <button class="tool-btn" id="tool-benzeno" onclick="selecionarFerramenta('benzeno')"><i class="fa-solid fa-circle-notch"></i> Benzeno</button>
+            <button class="tool-btn" id="tool-ciclohexano" onclick="selecionarFerramenta('ciclohexano')"><i class="fa-solid fa-hexagon"></i> Ciclohexano</button>
+            <button class="tool-btn" id="tool-ciclopentano" onclick="selecionarFerramenta('ciclopentano')"><i class="fa-solid fa-shapes"></i> Ciclopentano</button>
+          </div>
+
+          <!-- CAIXA DE ÁTOMOS & BIBLIOTECA -->
+          <span class="toolbar-section-label" style="margin-left:10px;">Átomos & Grupos:</span>
+          <div class="tool-box">
+            <button class="tool-btn" id="tool-atom-o" onclick="selecionarFerramenta('atom-o')"><strong>O</strong></button>
+            <button class="tool-btn" id="tool-atom-n" onclick="selecionarFerramenta('atom-n')"><strong>N</strong></button>
+            <button class="tool-btn" id="tool-atom-cl" onclick="selecionarFerramenta('atom-cl')"><strong>Cl</strong></button>
+            <button class="tool-btn" onclick="abrirModalBiblioteca()"><i class="fa-solid fa-book"></i> Biblioteca...</button>
+          </div>
         </div>
 
         <canvas id="chemsnap-canvas" width="650" height="420"></canvas>
@@ -795,6 +901,32 @@
     </div>
   </div>
 
+  <!-- MODAL BIBLIOTECA DE ABREVIAÇÕES / GRUPOS FUNCIONAIS -->
+  <div id="modal-biblioteca" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-book-bookmark" style="color: var(--accent);"></i> Biblioteca de Radicais & Grupos</h3>
+        <button class="btn-close-modal" onclick="fecharModalBiblioteca()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Clique em um grupo para selecioná-lo e carimbá-lo no canvas:</p>
+      <div class="groups-grid">
+        <button class="btn-group-item" onclick="selecionarGrupo('OH')">-OH (Hidroxila)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('COOH')">-COOH (Carboxila)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('CHO')">-CHO (Aldeído)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('NH2')">-NH₂ (Amina)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('NO2')">-NO₂ (Nitro)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('CH3')">-CH₃ (Metila)</button>
+
+        <button class="btn-group-item" onclick="selecionarGrupo('SO3H')">-SO₃H (Sulfônico)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('COOCH3')">-COOCH₃ (Éster)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('CONH2')">-CONH₂ (Amida)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('SH')">-SH (Tiol)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('CN')">-CN (Nitrila)</button>
+        <button class="btn-group-item" onclick="selecionarGrupo('OCH3')">-OCH₃ (Metóxi)</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let modoAtual = '2d';
     let fundoAtual = 'transp';
@@ -804,25 +936,57 @@
     let viewer3D = null;
     let eqParsedData = { reagentes: '', topCond: '', bottomCond: '', produtos: '' };
 
-    /* MOTOR DE DESENHO LIVRE UNIFICADO (POINTER EVENTS) */
+    /* MOTOR DE DESENHO LIVRE COM LUVA, LINHA CURVA E BIBLIOTECA */
     let ferramentaAtiva = 'lig-simples';
     let elementosDesenho = [];
     let desenhando = false;
     let startX = 0, startY = 0;
     let currentX = 0, currentY = 0;
+    let offsetX = 0, offsetY = 0; // Para pan/luva
+    let panStartX = 0, panStartY = 0;
     let canvasIniciado = false;
+    let grupoSelecionadoModal = '';
 
     function selecionarFerramenta(tool) {
       ferramentaAtiva = tool;
       document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`tool-${tool}`).classList.add('active');
+      const btn = document.getElementById(`tool-${tool}`);
+      if (btn) btn.classList.add('active');
+
+      const cvs = document.getElementById('chemsnap-canvas');
+      if (tool === 'luva') {
+        cvs.style.cursor = 'grab';
+      } else {
+        cvs.style.cursor = 'crosshair';
+      }
+    }
+
+    function abrirModalBiblioteca() {
+      document.getElementById('modal-biblioteca').classList.remove('hidden');
+    }
+
+    function fecharModalBiblioteca() {
+      document.getElementById('modal-biblioteca').classList.add('hidden');
+    }
+
+    function selecionarGrupo(grupo) {
+      grupoSelecionadoModal = grupo;
+      ferramentaAtiva = `grupo-${grupo}`;
+      fecharModalBiblioteca();
+      
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      const cvs = document.getElementById('chemsnap-canvas');
+      cvs.style.cursor = 'crosshair';
+      alert(`Grupo -${grupo} selecionado! Clique no canvas para carimbar.`);
     }
 
     function obterPosicao(e, cvs) {
       const rect = cvs.getBoundingClientRect();
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: e.clientX - rect.left - offsetX,
+        y: e.clientY - rect.top - offsetY,
+        rawX: e.clientX,
+        rawY: e.clientY
       };
     }
 
@@ -841,13 +1005,25 @@
         currentX = pos.x;
         currentY = pos.y;
 
-        if (ferramentaAtiva === 'borracha') {
+        if (ferramentaAtiva === 'luva') {
+          cvs.style.cursor = 'grabbing';
+          panStartX = e.clientX - offsetX;
+          panStartY = e.clientY - offsetY;
+        } else if (ferramentaAtiva === 'borracha') {
           apagarElemento(pos.x, pos.y);
         }
       });
 
       cvs.addEventListener('pointermove', (e) => {
         if (!desenhando) return;
+
+        if (ferramentaAtiva === 'luva') {
+          offsetX = e.clientX - panStartX;
+          offsetY = e.clientY - panStartY;
+          renderizarDesenhoCanvas();
+          return;
+        }
+
         const pos = obterPosicao(e, cvs);
         currentX = pos.x;
         currentY = pos.y;
@@ -864,7 +1040,12 @@
         desenhando = false;
         try { cvs.releasePointerCapture(e.pointerId); } catch(err) {}
 
-        if (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla') {
+        if (ferramentaAtiva === 'luva') {
+          cvs.style.cursor = 'grab';
+          return;
+        }
+
+        if (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla' || ferramentaAtiva === 'lig-curva') {
           const dist = Math.hypot(currentX - startX, currentY - startY);
           if (dist > 8) {
             elementosDesenho.push({
@@ -929,6 +1110,9 @@
         ctx.fillRect(0, 0, cvs.width, cvs.height);
       }
 
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+
       elementosDesenho.forEach(el => {
         if (el.tipo === 'benzeno') desenharAnelPoligono(ctx, el.x, el.y, 6, 38, true);
         if (el.tipo === 'ciclohexano') desenharAnelPoligono(ctx, el.x, el.y, 6, 38, false);
@@ -960,6 +1144,29 @@
           ctx.stroke();
         }
 
+        if (el.tipo === 'lig-curva') {
+          const dx = el.x2 - el.x1;
+          const dy = el.y2 - el.y1;
+          const dist = Math.hypot(dx, dy);
+          const steps = Math.max(6, Math.floor(dist / 10));
+
+          ctx.beginPath();
+          ctx.moveTo(el.x1, el.y1);
+          for (let i = 1; i <= steps; i++) {
+            let t = i / steps;
+            let px = el.x1 + dx * t;
+            let py = el.y1 + dy * t;
+            let offset = (i % 2 === 0 ? 6 : -6);
+            let angle = Math.atan2(dy, dx) + Math.PI / 2;
+            px += Math.cos(angle) * offset;
+            py += Math.sin(angle) * offset;
+            ctx.lineTo(px, py);
+          }
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+        }
+
         if (el.tipo.startsWith('atom-')) {
           let simbolo = el.tipo.replace('atom-', '').toUpperCase();
           ctx.font = 'bold 22px Arial';
@@ -968,10 +1175,19 @@
           ctx.textBaseline = 'middle';
           ctx.fillText(simbolo, el.x, el.y);
         }
+
+        if (el.tipo.startsWith('grupo-')) {
+          let texto = el.tipo.replace('grupo-', '');
+          ctx.font = 'bold 20px Arial';
+          ctx.fillStyle = '#b91c1c'; // Destaque avermelhado para radicais
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(texto, el.x, el.y);
+        }
       });
 
-      // Prévia interativa em verde ao arrastar a linha
-      if (desenhando && (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla')) {
+      // Prévia verde ao arrastar linhas
+      if (desenhando && ferramentaAtiva !== 'luva' && (ferramentaAtiva === 'lig-simples' || ferramentaAtiva === 'lig-dupla' || ferramentaAtiva === 'lig-curva')) {
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.lineTo(currentX, currentY);
@@ -981,6 +1197,8 @@
         ctx.stroke();
         ctx.setLineDash([]);
       }
+
+      ctx.restore();
     }
 
     function desfazerUltimoDesenho() {
@@ -990,6 +1208,8 @@
 
     function limparCanvasDesenho() {
       elementosDesenho = [];
+      offsetX = 0;
+      offsetY = 0;
       renderizarDesenhoCanvas();
     }
 
